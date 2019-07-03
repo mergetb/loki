@@ -3736,7 +3736,8 @@ func (c *DynamoDB) TagResourceRequest(input *TagResourceInput) (req *request.Req
 
 	output = &TagResourceOutput{}
 	req = c.newRequest(op, input, output)
-	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
 		de := discovererDescribeEndpoints{
 			Required:      false,
@@ -3948,14 +3949,6 @@ func (c *DynamoDB) TransactGetItemsRequest(input *TransactGetItemsInput) (req *r
 //      *  Any operation in the TransactWriteItems request would cause an item
 //      to become larger than 400KB.
 //
-//   * ErrCodeProvisionedThroughputExceededException "ProvisionedThroughputExceededException"
-//   Your request rate is too high. The AWS SDKs for DynamoDB automatically retry
-//   requests that receive this exception. Your request is eventually successful,
-//   unless your retry queue is too large to finish. Reduce the frequency of requests
-//   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
-//   in the Amazon DynamoDB Developer Guide.
-//
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
 //
@@ -4145,14 +4138,6 @@ func (c *DynamoDB) TransactWriteItemsRequest(input *TransactWriteItemsInput) (re
 //   DynamoDB rejected the request because you retried a request with a different
 //   payload but with an idempotent token that was already used.
 //
-//   * ErrCodeProvisionedThroughputExceededException "ProvisionedThroughputExceededException"
-//   Your request rate is too high. The AWS SDKs for DynamoDB automatically retry
-//   requests that receive this exception. Your request is eventually successful,
-//   unless your retry queue is too large to finish. Reduce the frequency of requests
-//   and use exponential backoff. For more information, go to Error Retries and
-//   Exponential Backoff (http://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Programming.Errors.html#Programming.Errors.RetryAndBackoff)
-//   in the Amazon DynamoDB Developer Guide.
-//
 //   * ErrCodeInternalServerError "InternalServerError"
 //   An error occurred on the server side.
 //
@@ -4217,7 +4202,8 @@ func (c *DynamoDB) UntagResourceRequest(input *UntagResourceInput) (req *request
 
 	output = &UntagResourceOutput{}
 	req = c.newRequest(op, input, output)
-	req.Handlers.Unmarshal.Swap(jsonrpc.UnmarshalHandler.Name, protocol.UnmarshalDiscardBodyHandler)
+	req.Handlers.Unmarshal.Remove(jsonrpc.UnmarshalHandler)
+	req.Handlers.Unmarshal.PushBackNamed(protocol.UnmarshalDiscardBodyHandler)
 	if aws.BoolValue(req.Config.EnableEndpointDiscovery) {
 		de := discovererDescribeEndpoints{
 			Required:      false,
@@ -14301,7 +14287,7 @@ type TransactWriteItemsInput struct {
 	// If you submit a request with the same client token but a change in other
 	// parameters within the 10 minute idempotency window, DynamoDB returns an IdempotentParameterMismatch
 	// exception.
-	ClientRequestToken *string `min:"1" type:"string" idempotencyToken:"true"`
+	ClientRequestToken *string `type:"string" idempotencyToken:"true"`
 
 	// Determines the level of detail about provisioned throughput consumption that
 	// is returned in the response:
@@ -14348,9 +14334,6 @@ func (s TransactWriteItemsInput) GoString() string {
 // Validate inspects the fields of the type to determine if they are valid.
 func (s *TransactWriteItemsInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "TransactWriteItemsInput"}
-	if s.ClientRequestToken != nil && len(*s.ClientRequestToken) < 1 {
-		invalidParams.Add(request.NewErrParamMinLen("ClientRequestToken", 1))
-	}
 	if s.TransactItems == nil {
 		invalidParams.Add(request.NewErrParamRequired("TransactItems"))
 	}

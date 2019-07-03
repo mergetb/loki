@@ -121,7 +121,7 @@ func hostInfo(addr string, defaultPort int) ([]*HostInfo, error) {
 	}
 
 	// Look up host in DNS
-	ips, err := LookupIP(host)
+	ips, err := net.LookupIP(host)
 	if err != nil {
 		return nil, err
 	} else if len(ips) == 0 {
@@ -166,13 +166,9 @@ func (c *controlConn) shuffleDial(endpoints []*HostInfo) (*Conn, error) {
 	// node.
 	shuffled := shuffleHosts(endpoints)
 
-	cfg := *c.session.connCfg
-	cfg.disableCoalesce = true
-
 	var err error
 	for _, host := range shuffled {
 		var conn *Conn
-		c.session.dial(host, &cfg, c)
 		conn, err = c.session.connect(host, c)
 		if err == nil {
 			return conn, nil
@@ -275,7 +271,7 @@ func (c *controlConn) setupConn(conn *Conn) error {
 
 	// TODO(zariel): do we need to fetch host info everytime
 	// the control conn connects? Surely we have it cached?
-	host, err := conn.localHostInfo(context.TODO())
+	host, err := conn.localHostInfo()
 	if err != nil {
 		return err
 	}
@@ -450,14 +446,14 @@ func (c *controlConn) query(statement string, values ...interface{}) (iter *Iter
 
 	for {
 		iter = c.withConn(func(conn *Conn) *Iter {
-			return conn.executeQuery(context.TODO(), q)
+			return conn.executeQuery(q)
 		})
 
 		if gocqlDebug && iter.err != nil {
 			Logger.Printf("control: error executing %q: %v\n", statement, iter.err)
 		}
 
-		q.AddAttempts(1, c.getConn().host)
+		q.attempts++
 		if iter.err == nil || !c.retry.Attempt(q) {
 			break
 		}
@@ -468,7 +464,7 @@ func (c *controlConn) query(statement string, values ...interface{}) (iter *Iter
 
 func (c *controlConn) awaitSchemaAgreement() error {
 	return c.withConn(func(conn *Conn) *Iter {
-		return &Iter{err: conn.awaitSchemaAgreement(context.TODO())}
+		return &Iter{err: conn.awaitSchemaAgreement()}
 	}).err
 }
 

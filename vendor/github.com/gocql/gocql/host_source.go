@@ -1,7 +1,6 @@
 package gocql
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -74,17 +73,12 @@ func (c *cassVersion) unmarshal(data []byte) error {
 }
 
 func (c cassVersion) Before(major, minor, patch int) bool {
-	// We're comparing us (cassVersion) with the provided version (major, minor, patch)
-	// We return true if our version is lower (comes before) than the provided one.
-	if c.Major < major {
+	if c.Major > major {
 		return true
-	} else if c.Major == major {
-		if c.Minor < minor {
-			return true
-		} else if c.Minor == minor && c.Patch < patch {
-			return true
-		}
-
+	} else if c.Minor > minor {
+		return true
+	} else if c.Patch > patch {
+		return true
 	}
 	return false
 }
@@ -556,7 +550,7 @@ func (r *ringDescriber) getClusterPeerInfo() ([]*HostInfo, error) {
 	var hosts []*HostInfo
 	iter := r.session.control.withConnHost(func(ch *connHost) *Iter {
 		hosts = append(hosts, ch.host)
-		return ch.conn.query(context.TODO(), "SELECT * FROM system.peers")
+		return ch.conn.query("SELECT * FROM system.peers")
 	})
 
 	if iter == nil {
@@ -623,7 +617,7 @@ func (r *ringDescriber) getHostInfo(ip net.IP, port int) (*HostInfo, error) {
 			return nil
 		}
 
-		return ch.conn.query(context.TODO(), "SELECT * FROM system.peers")
+		return ch.conn.query("SELECT * FROM system.peers")
 	})
 
 	if iter != nil {

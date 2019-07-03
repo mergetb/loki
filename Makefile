@@ -149,13 +149,15 @@ $(EXES) $(DEBUG_EXES) $(PROTO_GOS) $(YACC_GOS) lint test shell check-generated-f
 else
 
 $(DEBUG_EXES): loki-build-image/$(UPTODATE)
-	CGO_ENABLED=0 go build $(DEBUG_GO_FLAGS) -o $@ ./$(@D)
+	GO111MODULE=on go mod vendor
+	GO111MODULE=on CGO_ENABLED=0 go build $(DEBUG_GO_FLAGS) -o $@ ./$(@D)
 	$(NETGO_CHECK)
 	# Copy the delve binary to make it easily available to put in the binary's container.
 	[ -f "/go/bin/dlv" ] && mv "/go/bin/dlv" $(@D)/dlv
 
 $(EXES): loki-build-image/$(UPTODATE)
-	CGO_ENABLED=0 go build $(GO_FLAGS) -o $@ ./$(@D)
+	GO111MODULE=on go mod vendor
+	GO111MODULE=on CGO_ENABLED=0 go build $(GO_FLAGS) -o $@ ./$(@D)
 	$(NETGO_CHECK)
 
 %.pb.go: loki-build-image/$(UPTODATE)
@@ -267,7 +269,7 @@ clean:
 
 assets:
 	@echo ">> writing assets"
-	GOOS=$(shell go env GOHOSTOS) go generate -x -v ./pkg/promtail/server/ui
+	GOOS=$(shell go env GOHOSTOS) GO111MODULE=on go generate -x -v ./pkg/promtail/server/ui
 
 check_assets: assets
 	@echo ">> checking that assets are up-to-date"

@@ -16,3 +16,4 @@ cmd/docker-driver/docker-driver
 /logcli
 dlv
 rootfs/
+*.sw*

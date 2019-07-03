@@ -1,4 +1,5 @@
-FROM golang:1.11.4-stretch
+FROM golang:1.12-stretch
+ENV ENV GO111MODULE=on
 RUN apt-get update && apt-get install -y file jq unzip protobuf-compiler libprotobuf-dev && \
     rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
 ENV DOCKER_VER="17.03.0-ce"
